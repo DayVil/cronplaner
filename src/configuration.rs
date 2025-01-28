@@ -2,7 +2,8 @@ use std::{env, path::Path};
 use std::{fs::File, io::Read, path::PathBuf};
 
 use anyhow::{Context, Result};
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveTime};
+use chrono_tz::Tz;
 use serde::{Deserialize, Serialize};
 
 static ENV_NAME: &str = "CRONPLANER_CONFIG_DIR";
@@ -11,6 +12,25 @@ static ENV_NAME: &str = "CRONPLANER_CONFIG_DIR";
 pub struct TimeSlot {
     pub name: String,
     pub date: NaiveDate,
+
+    #[serde(default = "default_time")]
+    pub time: NaiveTime,
+
+    #[serde(default = "default_time_zone")]
+    pub time_zone: Tz,
+}
+
+fn default_time_zone() -> Tz {
+    let name = match localzone::get_local_zone() {
+        Some(name) => name,
+        None => "UTC".to_string(),
+    };
+
+    name.parse().unwrap()
+}
+
+fn default_time() -> NaiveTime {
+    NaiveTime::from_hms_opt(0, 0, 0).expect("This should not crash")
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
