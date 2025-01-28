@@ -1,3 +1,5 @@
+use std::fs;
+use std::io::Write;
 use std::{env, path::Path};
 use std::{fs::File, io::Read, path::PathBuf};
 
@@ -43,9 +45,8 @@ impl TimeSlotsConfig {
         #[cfg(feature = "example")]
         env::set_var(ENV_NAME, "./example");
 
-        let path_to_config_dir: PathBuf = Self::get_config_dir()?;
-        let config_path = path_to_config_dir.join("appointments.toml");
-        let mut file = File::open(&config_path).context("Couldn't find appointments.toml")?;
+        let config_path = Self::get_appointments_path()?;
+        let mut file = File::open(&config_path).context(format!("{:?}", config_path))?;
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
         let time_slots_config: TimeSlotsConfig = toml::from_str(&contents)?;
@@ -53,9 +54,33 @@ impl TimeSlotsConfig {
         Ok(time_slots_config)
     }
 
+    fn get_appointments_path() -> Result<PathBuf> {
+        let config_dir_path = Self::get_config_dir()?;
+        Ok(config_dir_path.join("appointments.toml"))
+    }
+
     fn get_config_dir() -> Result<PathBuf> {
         return Ok(env::var(ENV_NAME)
             .map(PathBuf::from)
             .unwrap_or_else(|_| Path::new("~").join(".config").join("cronplaner")));
+    }
+
+    pub fn write_back_to_file(&self) -> Result<()> {
+        let mut fd = fs::OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(Self::get_appointments_path()?)?;
+
+        let mut data = self.clone();
+        data.time_slots.sort_by(|a, b| {
+            let a_date_time = a.date.and_time(a.time);
+            let b_date_time = b.date.and_time(b.time);
+            a_date_time.cmp(&b_date_time)
+        });
+        println!("{:?}", data);
+        let to_write_data = toml::to_string(&data)?;
+        fd.write_all(to_write_data.as_bytes())?;
+
+        Ok(())
     }
 }
