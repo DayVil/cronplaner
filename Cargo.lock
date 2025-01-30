@@ -290,8 +290,7 @@ checksum = "b5aba8db14291edd000dfcc4d620c7ebfb122c613afb886ca8803fa4e128a20a"
 [[package]]
 name = "localzone"
 version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "718530aa7b3842752f82224791ea1db5e6b7260513b8ab45706937dbf54f7b4d"
+source = "git+https://github.com/DayVil/localzone.git?branch=main#4d633b4157c2a177dcb10176b11516941a12f847"
 dependencies = [
  "chrono-tz 0.9.0",
  "js-sys",
