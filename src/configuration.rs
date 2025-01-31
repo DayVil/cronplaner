@@ -106,7 +106,6 @@ impl TimeSlotsConfig {
 
         let mut data = self.clone();
         data.time_slots.sort();
-        println!("{:?}", data);
         let to_write_data = toml::to_string(&data)?;
         fd.write_all(to_write_data.as_bytes())
             .context("Couldn't write to config file")?;

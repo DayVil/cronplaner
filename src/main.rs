@@ -9,9 +9,24 @@ fn main() -> Result<()> {
     let time_slots = TimeSlotsConfig::new()?;
 
     let curr_time = current_time();
+    dbg!(curr_time);
     let diffs = time_slots.compare_to(&curr_time);
-    dbg!(diffs);
+    let time_diffs: Vec<String> = diffs
+        .iter()
+        .map(|x| {
+            let hours = x.num_hours();
+            let form = if hours < 24 {
+                let minutes = x.num_minutes() % 60;
+                format!("{:02}:{:02}", hours, minutes)
+            } else {
+                let days = x.num_days();
+                format!("{}", days)
+            };
+            return form;
+        })
+        .collect();
 
+    dbg!(time_diffs);
     time_slots.write_back_to_file()?;
     Ok(())
 }

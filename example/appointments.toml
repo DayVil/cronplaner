@@ -1,4 +1,16 @@
 [[time_slots]]
+name = "past"
+date = "2024-01-01"
+time = "00:00:00"
+time_zone = "EST"
+
+[[time_slots]]
+name = "Next"
+date = "2025-02-01"
+time = "15:00:00"
+time_zone = "Europe/Berlin"
+
+[[time_slots]]
 name = "Meth"
 date = "2025-11-03"
 time = "00:00:00"
