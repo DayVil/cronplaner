@@ -4,7 +4,7 @@ use std::{env, path::Path};
 use std::{fs::File, io::Read, path::PathBuf};
 
 use anyhow::{Context, Result};
-use chrono::{DateTime, NaiveDate, NaiveTime, TimeDelta, TimeZone};
+use chrono::{DateTime, NaiveDate, NaiveTime, TimeDelta, TimeZone, Utc};
 use chrono_tz::Tz;
 use serde::{Deserialize, Serialize};
 
@@ -66,7 +66,7 @@ impl TimeSlotsConfig {
             .iter()
             .map(|val| {
                 let date_time = val.to_date_time();
-                let diff = date_time - date;
+                let diff = date_time.with_timezone(&Utc) - date.with_timezone(&Utc);
                 diff
             })
             .filter(|val| val.num_seconds() >= 0)

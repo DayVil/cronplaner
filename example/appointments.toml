@@ -7,8 +7,8 @@ time_zone = "EST"
 [[time_slots]]
 name = "Next"
 date = "2025-02-01"
-time = "15:00:00"
-time_zone = "Europe/Berlin"
+time = "15:55:00"
+time_zone = "GMT"
 
 [[time_slots]]
 name = "Meth"
