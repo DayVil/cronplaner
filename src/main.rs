@@ -1,41 +1,49 @@
 mod configuration;
+mod view;
 
 use anyhow::Result;
-use chrono::{DateTime, Utc};
-use chrono_tz::Tz;
 use configuration::TimeSlotsConfig;
+use prettytable::{row, Table};
+use terminal_size::{terminal_size, Width};
 
 fn main() -> Result<()> {
     let time_slots = TimeSlotsConfig::new()?;
 
-    let curr_time = current_time();
-    dbg!(curr_time);
-    let diffs = time_slots.compare_to(&curr_time);
-    let time_diffs: Vec<String> = diffs
-        .iter()
-        .map(|x| {
-            let hours = x.num_hours();
-            let form = if hours < 24 {
-                let minutes = x.num_minutes() % 60;
-                format!("{:02}:{:02}", hours, minutes)
-            } else {
-                let days = x.num_days();
-                format!("{}", days)
-            };
-            return form;
-        })
-        .collect();
+    let diffs = time_slots.compare_to_today();
 
-    dbg!(time_diffs);
+    let mut table = Table::new();
+
+    table.add_row(row!["Name", "Due Date", "Remaining"]);
+
+    for diff in diffs {
+        let remaining = if diff.less_one_day() {
+            diff.to_hours().to_string()
+        } else {
+            format!("{} d", diff.to_days())
+        };
+
+        table.add_row(row![diff.name, diff.due, remaining]);
+    }
+
+    // Convert the table to a string
+    let table_string = table.to_string();
+
+    // Get the terminal width
+    let terminal_width = if let Some((Width(w), _)) = terminal_size() {
+        w as usize
+    } else {
+        80 // Default width if terminal size cannot be determined
+    };
+
+    // Calculate padding to center the table
+    let table_width = table_string.lines().next().map_or(0, |line| line.len());
+    let padding = (terminal_width.saturating_sub(table_width)) / 2;
+
+    // Print the table with padding
+    for line in table_string.lines() {
+        println!("{:>width$}", line, width = padding + line.len());
+    }
+
     time_slots.write_back_to_file()?;
     Ok(())
-}
-
-fn current_time() -> DateTime<Tz> {
-    let tz: Tz = localzone::get_local_zone()
-        .expect("Can't fail")
-        .parse()
-        .expect("Validated inside crate");
-    let current_time: DateTime<Tz> = Utc::now().with_timezone(&tz);
-    current_time
 }

@@ -1,12 +1,15 @@
-use std::fs;
+use std::env;
+use std::fs::{self};
 use std::io::Write;
-use std::{env, path::Path};
 use std::{fs::File, io::Read, path::PathBuf};
 
 use anyhow::{Context, Result};
-use chrono::{DateTime, NaiveDate, NaiveTime, TimeDelta, TimeZone, Utc};
+use chrono::{DateTime, NaiveDate, NaiveTime, TimeZone};
 use chrono_tz::Tz;
+use dirs::home_dir;
 use serde::{Deserialize, Serialize};
+
+use crate::view::TableView;
 
 static ENV_NAME: &str = "CRONPLANER_CONFIG_DIR";
 
@@ -40,8 +43,7 @@ impl TimeSlot {
     pub fn to_date_time(&self) -> DateTime<Tz> {
         let naive_date_time = self.date.and_time(self.time);
 
-        let source_dt = self
-            .time_zone
+        self.time_zone
             .from_local_datetime(&naive_date_time)
             .earliest()
             .unwrap_or_else(|| {
@@ -49,9 +51,7 @@ impl TimeSlot {
                     .from_local_datetime(&naive_date_time)
                     .latest()
                     .expect("Time conversion failed")
-            });
-
-        source_dt
+            })
     }
 }
 
@@ -61,15 +61,14 @@ pub struct TimeSlotsConfig {
 }
 
 impl TimeSlotsConfig {
-    pub fn compare_to(&self, date: &DateTime<Tz>) -> Vec<TimeDelta> {
+    pub fn compare_to_today(&self) -> Vec<TableView> {
         self.time_slots
             .iter()
             .map(|val| {
-                let date_time = val.to_date_time();
-                let diff = date_time.with_timezone(&Utc) - date.with_timezone(&Utc);
-                diff
+                let view: TableView = val.clone().into();
+                view
             })
-            .filter(|val| val.num_seconds() >= 0)
+            .filter(|val| val.diff.num_seconds() >= 0)
             .collect()
     }
 
@@ -79,9 +78,12 @@ impl TimeSlotsConfig {
     }
 
     fn get_config_dir() -> PathBuf {
-        return env::var(ENV_NAME)
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| Path::new("~").join(".config").join("cronplaner"));
+        env::var(ENV_NAME).map(PathBuf::from).unwrap_or_else(|_| {
+            home_dir()
+                .expect("Couldn't find home dir")
+                .join(".config")
+                .join("cronplaner")
+        })
     }
 
     pub fn new() -> Result<Self> {
@@ -89,8 +91,8 @@ impl TimeSlotsConfig {
         env::set_var(ENV_NAME, "./example");
 
         let config_path = Self::get_appointments_path();
-        let mut file =
-            File::open(&config_path).expect(&format!("Couldn't find file in: {:?}", &config_path));
+        let mut file = File::open(&config_path)
+            .unwrap_or_else(|_| panic!("Couldn't find file in: {:?}", &config_path));
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
         let time_slots_config: TimeSlotsConfig = toml::from_str(&contents)?;

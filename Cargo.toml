@@ -7,9 +7,11 @@ edition = "2021"
 anyhow = "1.0.95"
 chrono = { version = "0.4.39", features = ["serde"] }
 chrono-tz = { version = "0.10.1", features = ["serde"] }
-clap = "4.5.27"
+dirs = "6.0.0"
 localzone = { git = "https://github.com/DayVil/localzone.git", branch = "main", features = ["chrono-tz", "auto_validation"] }
+prettytable = "0.10.0"
 serde = { version = "1.0.217", features = ["derive"] }
+terminal_size = "0.4.1"
 toml = "0.8.19"
 
 [features]
